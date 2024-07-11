@@ -310,6 +310,9 @@ def train(args, model, criterion, postprocessors, device):
             args.clip_max_norm,
             max_batches_per_epoch=max_batches_per_epoch,
             print_freq=1000)
+
+        print('train_stats:')
+        print(train_stats)
         print("Epoch completed in ", datetime.now() - epoch_timing)
 
         lr_scheduler.step()
