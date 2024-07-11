@@ -22,6 +22,7 @@ import table_datasets as TD
 from table_datasets import PDFTablesDataset
 from eval import eval_coco
 
+import wandb
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -208,10 +209,22 @@ def train(args, model, criterion, postprocessors, device):
     """
     Training loop
     """
+    print('starting wandb')
+    clean_args = {key: value for key, value in args.__dict__.items() if not key.startswith('__')}
+
+    print(clean_args)
+    wandb.init(
+        # set the wandb project where this run will be logged
+        project="fine-tune-table-transformer-str",
+        # track hyperparameters and run metadata
+        config=clean_args
+    )   
 
     print("loading data")
     dataloading_time = datetime.now()
     data_loader_train, data_loader_val, dataset_val, train_len = get_data(args)
+    print(f'Total training size:{train_len} samples')
+    wandb.config["train_len"] = train_len
     print("finished loading data in :", datetime.now() - dataloading_time)
 
     model_without_ddp = model
@@ -313,6 +326,11 @@ def train(args, model, criterion, postprocessors, device):
 
         print('train_stats:')
         print(train_stats)
+        log_stats = train_stats.copy()
+        log_stats['epoch'] = epoch
+        log_stats = {f"train/{key}": value for key, value in log_stats.items()}
+        wandb.log(log_stats)
+        print(log_stats)
         print("Epoch completed in ", datetime.now() - epoch_timing)
 
         lr_scheduler.step()
@@ -326,6 +344,13 @@ def train(args, model, criterion, postprocessors, device):
                      pubmed_stats['coco_eval_bbox'][2],
                      pubmed_stats['coco_eval_bbox'][0],
                      pubmed_stats['coco_eval_bbox'][8]))
+        print('pubmed_stats')
+        print(pubmed_stats)
+        log_stats = pubmed_stats.copy()
+        log_stats['epoch'] = epoch
+        log_stats = {f"val/{key}": value for key, value in log_stats.items()}
+        wandb.log(log_stats)
+        print(log_stats)
 
         # Save current model training progress
         torch.save({'epoch': epoch,
