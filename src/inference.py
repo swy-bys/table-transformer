@@ -885,7 +885,7 @@ def main():
         print("({}/{})".format(count+1, num_files))
         img_path = os.path.join(args.image_dir, img_file)
         img = Image.open(img_path)
-        print("Image loaded.")
+        print(f"Image loaded: {img_path}")
 
         if not args.words_dir is None:
             tokens_path = os.path.join(args.words_dir, img_file.replace(".jpg", "_words.json"))
