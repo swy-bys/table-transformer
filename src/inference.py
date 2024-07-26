@@ -115,6 +115,9 @@ def get_args():
                         help='Visualize output')
     parser.add_argument('--crop_padding', type=int, default=10,
                         help="The amount of padding to add around a detected table when cropping.")
+    parser.add_argument('--overwrite_table_bb', '-t', action='store_false',
+                        help='overwrite table bb')
+    
 
     return parser.parse_args()
 
@@ -233,7 +236,7 @@ def refine_table_structure(table_structure, class_thresholds):
     return table_structure
 
 
-def outputs_to_objects(outputs, img_size, class_idx2name):
+def outputs_to_objects(outputs, img_size, class_idx2name, overwrite_table_bb = False):
     m = outputs['pred_logits'].softmax(-1).max(-1)
     pred_labels = list(m.indices.detach().cpu().numpy())[0]
     pred_scores = list(m.values.detach().cpu().numpy())[0]
@@ -241,11 +244,22 @@ def outputs_to_objects(outputs, img_size, class_idx2name):
     pred_bboxes = [elem.tolist() for elem in rescale_bboxes(pred_bboxes, img_size)]
 
     objects = []
+    
+
     for label, score, bbox in zip(pred_labels, pred_scores, pred_bboxes):
         class_label = class_idx2name[int(label)]
-        if not class_label == 'no object':
-            objects.append({'label': class_label, 'score': float(score),
-                            'bbox': [float(elem) for elem in bbox]})
+        # overwrite table bb
+        img_w, img_h = img_size
+
+        if overwrite_table_bb is True and class_label=='table':
+            objects.append({'label': 'table', 'score': 1.0,
+                            'bbox': [0.01, 0.01, img_w, img_h],
+                            'row_column_bbox':[0.01, 0.01, img_w, img_h]
+                            })
+        else:
+            if not class_label == 'no object':
+                objects.append({'label': class_label, 'score': float(score),
+                                'bbox': [float(elem) for elem in bbox]})
 
     return objects
 
@@ -754,7 +768,7 @@ class TableExtractionPipeline(object):
         return out_formats
 
     def recognize(self, img, tokens=None, out_objects=False, out_cells=False,
-                  out_html=False, out_csv=False):
+                  out_html=False, out_csv=False, overwrite_table_bb = False):
         out_formats = {}
         if self.str_model is None:
             print("No structure model loaded.")
@@ -771,7 +785,7 @@ class TableExtractionPipeline(object):
         outputs = self.str_model([img_tensor.to(self.str_device)])
 
         # Post-process detected objects, assign class labels
-        objects = outputs_to_objects(outputs, img.size, self.str_class_idx2name)
+        objects = outputs_to_objects(outputs, img.size, self.str_class_idx2name, overwrite_table_bb)
         if out_objects:
             out_formats['objects'] = objects
         if not (out_cells or out_html or out_csv):
@@ -861,6 +875,7 @@ def output_result(key, val, args, img, img_file):
 
 def main():
     args = get_args()
+    print('Arguments:')
     print(args.__dict__)
     print('-' * 100)
 
@@ -911,7 +926,7 @@ def main():
 
         if args.mode == 'recognize':
             extracted_table = pipe.recognize(img, tokens, out_objects=args.objects, out_cells=args.csv,
-                                out_html=args.html, out_csv=args.csv)
+                                out_html=args.html, out_csv=args.csv, overwrite_table_bb = args.overwrite_table_bb)
             print("Table(s) recognized.")
 
             for key, val in extracted_table.items():
