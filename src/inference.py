@@ -246,13 +246,13 @@ def outputs_to_objects(outputs, img_size, class_idx2name, overwrite_table_bb = F
 
     objects = []
     
-
+    print('overwrite_table_bb:', overwrite_table_bb)
     for label, score, bbox in zip(pred_labels, pred_scores, pred_bboxes):
         class_label = class_idx2name[int(label)]
         # overwrite table bb
         img_w, img_h = img_size
 
-        if overwrite_table_bb is True and class_label=='table':
+        if overwrite_table_bb is True and label=='table':
             objects.append({'label': 'table', 'score': 1.0,
                             'bbox': [0.01, 0.01, img_w, img_h],
                             'row_column_bbox':[0.01, 0.01, img_w, img_h]
@@ -787,6 +787,8 @@ class TableExtractionPipeline(object):
 
         # Post-process detected objects, assign class labels
         objects = outputs_to_objects(outputs, img.size, self.str_class_idx2name, overwrite_table_bb)
+        print('objects:')
+        print(objects)
         if out_objects:
             out_formats['objects'] = objects
         if not (out_cells or out_html or out_csv):
