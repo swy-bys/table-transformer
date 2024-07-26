@@ -115,7 +115,8 @@ def get_args():
                         help='Visualize output')
     parser.add_argument('--crop_padding', type=int, default=10,
                         help="The amount of padding to add around a detected table when cropping.")
-    parser.add_argument('--overwrite_table_bb', '-t', action='store_false',
+    # not: default to false when arg is not provided.
+    parser.add_argument('--overwrite_table_bb', '-t', action='store_true',
                         help='overwrite table bb')
     
 
