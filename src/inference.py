@@ -251,8 +251,8 @@ def outputs_to_objects(outputs, img_size, class_idx2name, overwrite_table_bb = F
         class_label = class_idx2name[int(label)]
         # overwrite table bb
         img_w, img_h = img_size
-
-        if overwrite_table_bb is True and label=='table':
+        print(overwrite_table_bb, class_label)
+        if overwrite_table_bb is True and class_label=='table':
             objects.append({'label': 'table', 'score': 1.0,
                             'bbox': [0.01, 0.01, img_w, img_h],
                             'row_column_bbox':[0.01, 0.01, img_w, img_h]
