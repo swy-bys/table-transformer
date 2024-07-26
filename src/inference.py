@@ -934,6 +934,8 @@ def main():
             extracted_table = pipe.recognize(img, tokens, out_objects=args.objects, out_cells=args.csv,
                                 out_html=args.html, out_csv=args.csv, overwrite_table_bb = args.overwrite_table_bb)
             print("Table(s) recognized.")
+            print('extracted_table:')
+            print(extracted_table)
 
             for key, val in extracted_table.items():
                 output_result(key, val, args, img, img_file)
