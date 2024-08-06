@@ -1,6 +1,6 @@
 {
     "lr":5e-7,
-    "lr_backbone":1e-7,
+    "lr_backbone":1e-5,
     "batch_size":2,
     "weight_decay":1e-4,
     "epochs":20,
